@@ -43,8 +43,8 @@ const initSettings: UserSettingsModel = {
       },
       {
         id: getUuid(),
-        name: 'jsDelivr',
-        rule: 'https://cdn.jsdelivr.net/gh/{{owner}}/{{repo}}@{{branch}}/{{path}}'
+        name: 'Mbsky',
+        rule: 'https://proxy.mbsky.top/gh/{{owner}}/{{repo}}/{{branch}}/{{path}}'
       },
       {
         id: getUuid(),

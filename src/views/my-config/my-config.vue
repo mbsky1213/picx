@@ -8,12 +8,11 @@
       <el-form-item label="Token">
         <el-input
           ref="tokenInputRef"
-          v-model="userConfigInfo.token"
+          v-model="password"
           clearable
-          :autofocus="!userConfigInfo.token"
           type="password"
           show-password
-          :placeholder="$t('config.inputToken')"
+          placeholder="请输入密码"
         ></el-input>
       </el-form-item>
 
@@ -240,7 +239,9 @@
 </template>
 
 <script lang="ts" setup>
+// @ts-nocheck
 import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
+import Axios from 'axios'
 import { useStore } from '@/stores'
 import { BranchModeEnum, BranchModel, DirModeEnum } from '@/common/model'
 import { formatDatetime } from '@/utils'
@@ -272,6 +273,7 @@ const dirLoading = ref(false)
 const branchLoading = ref(false)
 const refreshBoxWidth = ref(32)
 
+const password = ref('')
 const userConfigInfo = computed(() => store.getters.getUserConfigInfo).value
 const logined = computed(() => store.getters.getUserLoginStatus).value
 const userSettings = computed(() => store.getters.getUserSettings).value
@@ -393,26 +395,44 @@ async function getBranchList(repo: string) {
 }
 
 async function getUserInfo() {
-  if (!userConfigInfo.token) {
-    ElMessage.error({ message: instance?.proxy?.$t('config.message1') })
-    return
+  if (password.value) {
+    userInfoLoading.value = true
+
+    Axios.post('/api/login', {
+      password: password.value
+    })
+      .then(async (res) => {
+        if (res.data.token) {
+          userConfigInfo.token = res.data.token
+          if (!userConfigInfo.token) {
+            ElMessage.error({ message: instance?.proxy?.$t('config.message1') })
+            return
+          }
+
+          if (!reConfig.value) {
+            initReHandConfig()
+          }
+
+          const userInfo = await getGitHubUserInfo(userConfigInfo.token)
+          console.log('getGitHubUserInfo >> ', userInfo)
+
+          if (!userInfo) {
+            ElMessage.error({ message: instance?.proxy?.$t('config.message11') })
+            return
+          }
+
+          saveUserInfo(userInfo)
+          await getRepoList(userInfo.login)
+
+          userInfoLoading.value = false
+        }
+      })
+      .catch(() => {
+        userInfoLoading.value = false
+      })
+  } else {
+    ElMessage.warning({ message: '密码 不能为空！' })
   }
-
-  if (!reConfig.value) {
-    initReHandConfig()
-  }
-
-  userInfoLoading.value = true
-  const userInfo = await getGitHubUserInfo(userConfigInfo.token)
-  console.log('getGitHubUserInfo >> ', userInfo)
-
-  if (!userInfo) {
-    ElMessage.error({ message: instance?.proxy?.$t('config.message11') })
-    return
-  }
-
-  saveUserInfo(userInfo)
-  await getRepoList(userInfo.login)
 }
 
 function selectRepo(repo: string) {

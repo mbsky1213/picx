@@ -39,6 +39,7 @@ module.exports = {
     'no-console': 'off',
     'no-shadow': 'off',
     'import/prefer-default-export': 'off',
+    'vue/multi-word-component-names': 'off',
     camelcase: 'off',
     'no-param-reassign': 'off',
     'no-await-in-loop': 'off'
